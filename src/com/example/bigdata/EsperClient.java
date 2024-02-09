@@ -23,37 +23,15 @@ public class EsperClient {
         int noOfRecordsPerSec;
         int howLongInSec;
         if (args.length < 2) {
-            noOfRecordsPerSec = 20;//20
-            howLongInSec = 30;
+            noOfRecordsPerSec = 2;
+            howLongInSec = 5;
         } else {
             noOfRecordsPerSec = Integer.parseInt(args[0]);
             howLongInSec = Integer.parseInt(args[1]);
         }
 
         Configuration config = new Configuration();
-        CompilerArguments compilerArgs = new CompilerArguments(config);
-
-        // Compile the EPL statement
-        EPCompiler compiler = EPCompilerProvider.getCompiler();
-        EPCompiled epCompiled;
-        try {
-//            epCompiled = compiler.compile("""
-//                    @public @buseventtype create json schema ScoreEvent(house string, character string, score int, ts string);
-//                    @name('result') SELECT * from ScoreEvent.win:time(10 sec)
-//                    group by house
-//                    having score > avg(score);""", compilerArgs);
-            String epl_1 = """
-                    @public @buseventtype create json schema JokeEvent(character string, quote string, people_in_room int, laughing_people int, ts string);
-                    @name('result') SELECT character, avg(laughing_people), ts from JokeEvent.win:time(10 sec)
-                    group by character;""";
-
-            epCompiled = compiler.compile(epl_1, compilerArgs);
-
-        }
-        catch (EPCompileException ex) {
-            // handle exception here
-            throw new RuntimeException(ex);
-        }
+        EPCompiled epCompiled = getEPCompiled(config);
 
         // Connect to the EPRuntime server and deploy the statement
         EPRuntime runtime = EPRuntimeProvider.getRuntime("http://localhost:port", config);
@@ -95,14 +73,36 @@ public class EsperClient {
                         .set("quote", () -> faker.howIMetYourMother().quote())
                         .set("people_in_room", () -> String.valueOf(people_in_room))
                         .set("laughing_people", () -> String.valueOf(faker.number().numberBetween(0,people_in_room)))
-                        .set("pubs", () -> selectedPub)
+                        .set("pub", () -> selectedPub)
                         .set("ets", eTimestamp::toString)
-                        .set("ts", () -> iTimestamp.toString())
+                        .set("its", iTimestamp::toString)
                         .build().generate();
                 runtime.getEventService().sendEventJson(record, "JokeEvent");
             }
             waitToEpoch();
         }
+    }
+
+    private static EPCompiled getEPCompiled(Configuration config) {
+        CompilerArguments compilerArgs = new CompilerArguments(config);
+
+        // Compile the EPL statement
+        EPCompiler compiler = EPCompilerProvider.getCompiler();
+        EPCompiled epCompiled;
+        try {
+            String epl_1 = """
+                    @public @buseventtype create json schema JokeEvent(character string, quote string, people_in_room int, laughing_people int, pub string, ets string, its string);
+                    @name('result') SELECT character, quote, people_in_room, laughing_people, pub, ets, its from JokeEvent.win:time(10 sec)
+                    group by character;""";
+
+            epCompiled = compiler.compile(epl_1, compilerArgs);
+
+        }
+        catch (EPCompileException ex) {
+            // handle exception here
+            throw new RuntimeException(ex);
+        }
+        return epCompiled;
     }
 
     static void waitToEpoch() throws InterruptedException {

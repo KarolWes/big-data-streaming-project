@@ -11,7 +11,7 @@ Każde zdarzenie związane jest z faktem opowiedzenia żartu, przez określonego
 
 Dane są uzupełnione o dwie etykiety czasowe. 
 * Pierwsza (`ets`) związana jest z momentem wypowiedzenia żartu w rzeczywistości. 
-  Etykieta ta może się losowo spóźniać w stosunku do czasu systemowego max do 30 sekund.
+  Etykieta ta może się losowo spóźniać w stosunku do czasu systemowego maksymalnie do 30 sekund.
 * Druga (`its`) związana jest z momentem rejestracji zdarzenia systemie.
 
 # Opis atrybutów
@@ -20,11 +20,11 @@ Atrybuty w każdym zdarzeniu zgodnym ze schematem `JokeEvent` mają następując
 
 * `character` - nazwa postaci opowiadającej żart
 * `quote` - cytat
-* `people_in_room` - liczba osób w pokoju w chwili wypowiedzenia żartu 
+* `people_in_room` - liczba osób w pokoju w chwili opowiedzenia żartu 
 * `laughing_people` - liczba osób, których rozbawił żart
-* `pubs` - pub, w którym żart został wypowiedziany
-* `ets` - czas wypowiedzenia żartu w rzeczywistości
-* `ts` - czas rejestracji w systemie
+* `pub` - pub, w którym żart został wypowiedziany
+* `ets` - czas opowiedzenia żartu w rzeczywistości
+* `its` - czas rejestracji w systemie
 
 # Zadania
 Opracuj rozwiązania poniższych zadań. 
@@ -49,7 +49,7 @@ Wyniki powinny zawierać następujące kolumny:
 - `avg_laughing_people` - średnia liczba osób.
 
 ## Zadanie 2
-Znajduj przypadki wypowiedzenia żartu, z którego nikt się nie zaśmiał. 
+Znajduj przypadki opowiedzenia żartu, z którego nikt się nie zaśmiał. 
 
 Wyniki powinny zawierać następujące kolumny:
 - `character` - osoba,
@@ -76,19 +76,22 @@ Wyniki powinny zawierać następujące kolumny:
 
 ## Zadanie 5
 Wykrywaj serię żartów w pubie o nazwie McLaren's, podczas których śmiejąca się liczba osób nie wzrastała powyżej 5.
+
 Wyniki powinny zawierać następujące kolumny:
 - `pub` - nazwę pubu,
 - `its_start` - czas rozpoczęcia serii 
 
 ## Zadanie 6
-Znajdź następujące po sobie (niekoniecznie bezpośrednio) te trójki żartów, w czasie których liczba osób śmiejących się była większa niż 4. Nie uwzględniaj w wyniku przypadków trójek jeżeli pomiędzy pierwszym a trzecim zdarzem, zanotowano żart wypowiedziany dla publiki liczącej nie mniej niż 30 osób. 
+Znajdź następujące po sobie (niekoniecznie bezpośrednio) te trójki żartów, w czasie których liczba osób śmiejących się była większa niż 4. Nie uwzględniaj w wyniku przypadków trójek, jeżeli pomiędzy pierwszym a trzecim zdarzeniem, zanotowano żart opowiedziany dla publiki liczącej nie mniej niż 30 osób. 
+
 Wyniki powinny zawierać następujące kolumny:
 - `laughing_people1` - liczba śmiejących się osób w przypadku zdarzenia pierwszego
 - `laughing_people2` - liczba śmiejących się osób w przypadku zdarzenia drugiego
 - `laughing_people3` - liczba śmiejących się osób w przypadku zdarzenia trzeciego
 
 ## Zadanie 7
-Dla każdego pubu, odnajduj serię żartów, dla których liczba osób śmiejących się konsekwentnie malała (co najmniej 4 spadki z rzędu). Seria kończy się przed żartem, w którym liczba osób śmiejących się wreszcie wzrosła.
+Dla każdego pubu wyszukuj serie żartów, dla których liczba osób śmiejących się konsekwentnie malała (co najmniej 4 spadki z rzędu). Seria kończy się przed żartem, w którym liczba osób śmiejących się wreszcie wzrosła.
+
 Wyniki powinny zawierać następujące kolumny:
 - `ppl_before` - liczba osób przed spadkami,
 - `ppl_after` - liczba osób dla ostatniego żartu w serii spadków,
