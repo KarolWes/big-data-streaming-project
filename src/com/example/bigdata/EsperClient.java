@@ -31,56 +31,40 @@ public class EsperClient {
         }
 
         Configuration config = new Configuration();
-        EPCompiled epCompiled = getEPCompiled(config);
-
-        // Connect to the EPRuntime server and deploy the statement
         EPRuntime runtime = EPRuntimeProvider.getRuntime("http://localhost:port", config);
-        EPDeployment deployment;
-        try {
-            deployment = runtime.getDeploymentService().deploy(epCompiled);
-        }
-        catch (EPDeployException ex) {
-            // handle exception here
-            throw new RuntimeException(ex);
-        }
 
-        EPStatement resultStatement = runtime.getDeploymentService().getStatement(deployment.getDeploymentId(), "result");
 
+        EPDeployment deployment = compileAndDeploy(runtime, """
+                    @public @buseventtype create json schema JokeEvent(character string, quote string, people_in_room int, laughing_people int, pub string, ets string, its string);
+                    @name('result') SELECT character, quote, people_in_room, laughing_people, pub, ets, its from JokeEvent.win:time(10 sec)
+                    group by character;""");
+
+        SimpleListener listener = new SimpleListener();
         // Add a listener to the statement to handle incoming events
-        resultStatement.addListener( (newData, oldData, stmt, runTime) -> {
-            for (EventBean eventBean : newData) {
-                System.out.printf("R: %s%n", eventBean.getUnderlying());
-            }
-        });
-        Faker faker = new Faker(new Random(25));
-        String record;
-
-        long startTime = System.currentTimeMillis();
-        while (System.currentTimeMillis() < startTime + (1000L * howLongInSec)) {
-            for (int i = 0; i < noOfRecordsPerSec; i++) {
-                String character = faker.howIMetYourMother().character();
-                String[] pubs = {"McLaren's Pub", "McGee's Pub", "Pemberton's Pub", "Flaming Saddles Saloon",
-                        "As Is NYC", "Lilly's Craft", "Empanada Mama", "Southgate", "P&J Carney's Pub", "O'Donoghue's"};
-                Random random = new Random();
-                int index = random.nextInt(pubs.length);
-                String selectedPub = pubs[index];
-                Timestamp eTimestamp = faker.date().past(30, TimeUnit.SECONDS);
-                eTimestamp.setNanos(0);
-                Timestamp iTimestamp = Timestamp.valueOf(LocalDateTime.now().withNano(0));
-                int people_in_room = faker.number().numberBetween(0,10);
-                record = Format.toJson()
-                        .set("character", () -> character)
-                        .set("quote", () -> faker.howIMetYourMother().quote())
-                        .set("people_in_room", () -> String.valueOf(people_in_room))
-                        .set("laughing_people", () -> String.valueOf(faker.number().numberBetween(0,people_in_room)))
-                        .set("pub", () -> selectedPub)
-                        .set("ets", eTimestamp::toString)
-                        .set("its", iTimestamp::toString)
-                        .build().generate();
-                runtime.getEventService().sendEventJson(record, "JokeEvent");
-            }
-            waitToEpoch();
+        for (EPStatement statement : deployment.getStatements()) {
+            statement.addListener(listener);
         }
+
+        InputStreamGenerator generator = new InputStreamGenerator(noOfRecordsPerSec, howLongInSec);
+        generator.generate(runtime);
+
+
+
+    }
+
+    public static EPDeployment compileAndDeploy(EPRuntime epRuntime, String epl) {
+        EPDeploymentService deploymentService = epRuntime.getDeploymentService();
+        EPDeployment deployment;
+
+        CompilerArguments args =
+                new CompilerArguments(epRuntime.getConfigurationDeepCopy());
+        try {
+            EPCompiled epCompiled = EPCompilerProvider.getCompiler().compile(epl, args);
+            deployment = deploymentService.deploy(epCompiled);
+        } catch (EPCompileException | EPDeployException e) {
+            throw new RuntimeException(e);
+        }
+        return deployment;
     }
 
     private static EPCompiled getEPCompiled(Configuration config) {
@@ -90,10 +74,7 @@ public class EsperClient {
         EPCompiler compiler = EPCompilerProvider.getCompiler();
         EPCompiled epCompiled;
         try {
-            String epl_1 = """
-                    @public @buseventtype create json schema JokeEvent(character string, quote string, people_in_room int, laughing_people int, pub string, ets string, its string);
-                    @name('result') SELECT character, quote, people_in_room, laughing_people, pub, ets, its from JokeEvent.win:time(10 sec)
-                    group by character;""";
+            String epl_1 = "";
 
             epCompiled = compiler.compile(epl_1, compilerArgs);
 
@@ -105,12 +86,6 @@ public class EsperClient {
         return epCompiled;
     }
 
-    static void waitToEpoch() throws InterruptedException {
-        long millis = System.currentTimeMillis();
-        Instant instant = Instant.ofEpochMilli(millis) ;
-        Instant instantTrunc = instant.truncatedTo( ChronoUnit.SECONDS ) ;
-        long millis2 = instantTrunc.toEpochMilli() ;
-        TimeUnit.MILLISECONDS.sleep(millis2+1000-millis);
-    }
+
 }
 
