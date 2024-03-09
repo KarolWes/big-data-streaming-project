@@ -36,9 +36,9 @@ public class InputStreamGenerator {
         this.howLongInSec = howLongInSec;
     }
 
-    public void generate(EPRuntime runtime) throws InterruptedException {
+    public void generate(EPRuntime runtime, boolean json) throws InterruptedException {
         Faker faker = new Faker(new Random(25));
-        String record;
+
 
         long startTime = System.currentTimeMillis();
         while (System.currentTimeMillis() < startTime + (1000L * howLongInSec)) {
@@ -52,21 +52,38 @@ public class InputStreamGenerator {
                 Timestamp eTimestamp = faker.date().past(30, TimeUnit.SECONDS);
                 eTimestamp.setNanos(0);
                 Timestamp iTimestamp = Timestamp.valueOf(LocalDateTime.now().withNano(0));
-                int people_in_room = faker.number().numberBetween(0,10);
-                record = Format.toJson()
-                        .set("character", () -> character)
-                        .set("quote", () -> faker.howIMetYourMother().quote())
-                        .set("people_in_room", () -> String.valueOf(people_in_room))
-                        .set("laughing_people", () -> String.valueOf(faker.number().numberBetween(0,people_in_room)))
-                        .set("pub", () -> selectedPub)
-                        .set("ets", eTimestamp::toString)
-                        .set("its", iTimestamp::toString)
-                        .build().generate();
-                runtime.getEventService().sendEventJson(record, "JokeEvent");
+                int people_in_room = faker.number().numberBetween(1,10);
+
+                if(json){
+                    String record;
+                    record = Format.toJson()
+                            .set("character", () -> character)
+                            .set("quote", () -> faker.howIMetYourMother().quote())
+                            .set("people_in_room", () -> String.valueOf(people_in_room))
+                            .set("laughing_people", () -> String.valueOf(faker.number().numberBetween(0,people_in_room)))
+                            .set("pub", () -> selectedPub)
+                            .set("ets", eTimestamp::toString)
+                            .set("its", iTimestamp::toString)
+                            .build().generate();
+                    runtime.getEventService().sendEventJson(record, "JokeEvent");
+                }else{
+                    JokeData record;
+                    record = new JokeData(
+                            character,
+                            faker.howIMetYourMother().quote(),
+                            people_in_room,
+                            faker.number().numberBetween(0,people_in_room),
+                            selectedPub,
+                            eTimestamp,
+                            iTimestamp
+                    );
+                    runtime.getEventService().sendEventBean(record, "JokeData");
+                }
             }
             waitToEpoch();
         }
     }
+
 
     static void waitToEpoch() throws InterruptedException {
         long millis = System.currentTimeMillis();

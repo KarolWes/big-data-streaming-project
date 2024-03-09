@@ -1,0 +1,20 @@
+"""
+                    @public @buseventtype create json schema JokeEvent(character string, quote string, people_in_room int, laughing_people int, pub string, ets string, its string);
+                    @name('result') SELECT character, quote, people_in_room, laughing_people, pub, ets, its from JokeEvent.win:time(10 sec)
+                    group by character;"""
+
+
+ex1
+@name('answer') SELECT irstream character, avg(laughing)
+from JokeData
+group by character;
+
+ex2
+@name('answer') SELECT irstream character, its
+from JokeEvent
+where laughing_people = 0;
+
+ex3
+@name('answer') SELECT irstream character, its, max(laughing_people)
+from JokeEvent.win:time(2 min)
+having laughing_people = max(laughing_people);

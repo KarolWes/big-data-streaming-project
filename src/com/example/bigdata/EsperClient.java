@@ -1,29 +1,19 @@
 package com.example.bigdata;
 
 import com.espertech.esper.common.client.EPCompiled;
-import com.espertech.esper.common.client.EventBean;
 import com.espertech.esper.common.client.configuration.Configuration;
 import com.espertech.esper.compiler.client.CompilerArguments;
 import com.espertech.esper.compiler.client.EPCompileException;
 import com.espertech.esper.compiler.client.EPCompiler;
 import com.espertech.esper.compiler.client.EPCompilerProvider;
 import com.espertech.esper.runtime.client.*;
-import net.datafaker.Faker;
-import net.datafaker.fileformats.Format;
-
-import java.sql.Timestamp;
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
-import java.util.Random;
-import java.util.concurrent.TimeUnit;
 
 public class EsperClient {
     public static void main(String[] args) throws InterruptedException {
         int noOfRecordsPerSec;
         int howLongInSec;
         if (args.length < 2) {
-            noOfRecordsPerSec = 2;
+            noOfRecordsPerSec = 10;
             howLongInSec = 5;
         } else {
             noOfRecordsPerSec = Integer.parseInt(args[0]);
@@ -31,13 +21,17 @@ public class EsperClient {
         }
 
         Configuration config = new Configuration();
+        //config.getCommon().addEventType(JokeData.class);
         EPRuntime runtime = EPRuntimeProvider.getRuntime("http://localhost:port", config);
 
 
         EPDeployment deployment = compileAndDeploy(runtime, """
-                    @public @buseventtype create json schema JokeEvent(character string, quote string, people_in_room int, laughing_people int, pub string, ets string, its string);
-                    @name('result') SELECT character, quote, people_in_room, laughing_people, pub, ets, its from JokeEvent.win:time(10 sec)
-                    group by character;""");
+               @public @buseventtype create json schema JokeEvent(character string, quote string, people_in_room int, laughing_people int, pub string, ets string, its string);
+               
+               @name('answer') SELECT irstream character, its, max(laughing_people)
+               from JokeEvent.win:time(2 min)
+               having laughing_people = max(laughing_people);
+                """);
 
         SimpleListener listener = new SimpleListener();
         // Add a listener to the statement to handle incoming events
@@ -46,7 +40,7 @@ public class EsperClient {
         }
 
         InputStreamGenerator generator = new InputStreamGenerator(noOfRecordsPerSec, howLongInSec);
-        generator.generate(runtime);
+        generator.generate(runtime, true);
 
 
 
