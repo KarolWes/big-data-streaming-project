@@ -4,7 +4,7 @@ Poszczególne postaci z serialu "Jak poznałem waszą matkę" opowiadają żarty
 W strumieniu pojawiają się zdarzenia zgodne ze schematem `JokeEvent`.
 
 ```
-create json schema JokeEvent(character string, quote string, people_in_room int, laughing_people int, pubs string, ets string, ts string)
+create json schema JokeEvent(character string, quote string, people_in_room int, laughing_people int, pubs string, ets string, its string)
 ```
 
 Każde zdarzenie związane jest z faktem opowiedzenia żartu, przez określonego bohatera serialu HIMYM (*How I Met Your Mother*). Wydarzeniu temu odpowiada liczba osób znajdujących się w pubie w chwili wypowiedzenia żartu, liczba osób, które żart rozbawił oraz nazwa pubu.  
@@ -34,7 +34,7 @@ Opracuj rozwiązania poniższych zadań.
   * być poleceniem `select` 
   * posiadającym etykietę `answer`, przykładowo:
 
-```aidl
+```sql
 @name('answer') SELECT character, laughing_people, 
                        sum(people_in_room) as sumPeople_in_room, 
                        count(*) howMany, ets, its
@@ -64,7 +64,7 @@ Wyniki powinny zawierać następujące kolumny:
 - `its` - czas rejestracji żartu w systemie.
 
 ## Zadanie 4
-Chcemy wykrywać małośmieszne puby. Dla każdego pubu i każdej kolejnej minuty chcemy wyliczać: 
+Chcemy wykrywać niezbyt śmieszne puby. Dla każdego pubu i każdej kolejnej minuty chcemy wyliczać: 
 - liczbę żartów śmiesznych (liczba osób śmiejących się z żartu jest powyżej 50% osób w pubie)
 - liczbę sucharów (liczba osób śmiejących się z żartu jest poniżej 50% osób w pubie).
 
@@ -95,5 +95,5 @@ Dla każdego pubu wyszukuj serie żartów, dla których liczba osób śmiejącyc
 Wyniki powinny zawierać następujące kolumny:
 - `ppl_before` - liczba osób przed spadkami,
 - `ppl_after` - liczba osób dla ostatniego żartu w serii spadków,
-- `ppl_count` - liczba żartów zanotawanych w serii spadków,
+- `ppl_count` - liczba żartów zanotowanych w serii spadków,
 - `pub` - nazwa pubu, w którym zanotowano serię.
