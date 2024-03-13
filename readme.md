@@ -4,7 +4,7 @@ Poszczególne postaci z serialu "Jak poznałem waszą matkę" opowiadają żarty
 W strumieniu pojawiają się zdarzenia zgodne ze schematem `JokeEvent`.
 
 ```
-create json schema JokeEvent(character string, quote string, people_in_room int, laughing_people int, pubs string, ets string, its string)
+create json schema JokeEvent(character string, quote string, people_in_room int, laughing_people int, pub string, ets string, its string)
 ```
 
 Każde zdarzenie związane jest z faktem opowiedzenia żartu, przez określonego bohatera serialu HIMYM (*How I Met Your Mother*). Wydarzeniu temu odpowiada liczba osób znajdujących się w pubie w chwili wypowiedzenia żartu, liczba osób, które żart rozbawił oraz nazwa pubu.  
