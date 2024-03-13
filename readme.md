@@ -95,5 +95,5 @@ Dla każdego pubu wyszukuj serie żartów, dla których liczba osób śmiejącyc
 Wyniki powinny zawierać następujące kolumny:
 - `ppl_before` - liczba osób przed spadkami,
 - `ppl_after` - liczba osób dla ostatniego żartu w serii spadków,
-- `ppl_count` - liczba żartów zanotowanych w serii spadków,
+- `jokes_count` - liczba żartów zanotowanych w serii spadków,
 - `pub` - nazwa pubu, w którym zanotowano serię.
