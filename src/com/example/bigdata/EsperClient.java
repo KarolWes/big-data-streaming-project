@@ -28,10 +28,19 @@ public class EsperClient {
         EPDeployment deployment = compileAndDeploy(runtime, """
                @public @buseventtype create json schema JokeEvent(character string, quote string, people_in_room int, laughing_people int, pub string, ets string, its string);
                
-               @name('answer') SELECT irstream character, its, max(laughing_people)
-               from JokeEvent.win:time(2 min)
-               having laughing_people = max(laughing_people);
-                """);
+               select pub, count(laughing_people) - (
+                    select count(laughing_people)
+                     from JokeEvent(laughing_people * 2 > people_in_room)#time_batch(5 sec)
+                     group by pub
+                     ) as sad,
+                     (
+                    select count(laughing_people)
+                     from JokeEvent(laughing_people * 2 > people_in_room)#time_batch(5 sec)
+                     group by pub
+                     ) as funny
+                     from JokeEvent()#time_batch(5 sec)
+                     group by pub;
+                     """);
 
         SimpleListener listener = new SimpleListener();
         // Add a listener to the statement to handle incoming events
