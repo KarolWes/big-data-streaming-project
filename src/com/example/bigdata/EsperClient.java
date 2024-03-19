@@ -8,39 +8,33 @@ import com.espertech.esper.compiler.client.EPCompiler;
 import com.espertech.esper.compiler.client.EPCompilerProvider;
 import com.espertech.esper.runtime.client.*;
 
+import java.text.SimpleDateFormat;
+
 public class EsperClient {
     public static void main(String[] args) throws InterruptedException {
         int noOfRecordsPerSec;
         int howLongInSec;
         if (args.length < 2) {
             noOfRecordsPerSec = 10;
-            howLongInSec = 5;
+            howLongInSec = 61;
         } else {
             noOfRecordsPerSec = Integer.parseInt(args[0]);
             howLongInSec = Integer.parseInt(args[1]);
         }
-
+        SimpleDateFormat dateFormat = new SimpleDateFormat("H:m");
         Configuration config = new Configuration();
         //config.getCommon().addEventType(JokeData.class);
         EPRuntime runtime = EPRuntimeProvider.getRuntime("http://localhost:port", config);
 
 
         EPDeployment deployment = compileAndDeploy(runtime, """
-               @public @buseventtype create json schema JokeEvent(character string, quote string, people_in_room int, laughing_people int, pub string, ets string, its string);
+              @public @buseventtype create json schema JokeEvent(character string, quote string, people_in_room int, laughing_people int, pub string, ets string, its string);
                
-               select pub, count(laughing_people) - (
-                    select count(laughing_people)
-                     from JokeEvent(laughing_people * 2 > people_in_room)#time_batch(5 sec)
-                     group by pub
-                     ) as sad,
-                     (
-                    select count(laughing_people)
-                     from JokeEvent(laughing_people * 2 > people_in_room)#time_batch(5 sec)
-                     group by pub
-                     ) as funny
-                     from JokeEvent()#time_batch(5 sec)
-                     group by pub;
-                     """);
+              @name('answer') select pub, its.substring(11, 16) as its_start,
+              from JokeEvent#time_batch(1 min)
+              group by its.substring(11, 16), pub
+              having sum (case when laughing_people * 2 > people_in_room then 1 else (case when laughing_people * 2 = people_in_room then 0 else -1 end) end) < 0;
+                 """);
 
         SimpleListener listener = new SimpleListener();
         // Add a listener to the statement to handle incoming events

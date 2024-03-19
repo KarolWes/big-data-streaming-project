@@ -31,3 +31,17 @@ select pub as funny
 from JokeEvent()#time_batch(1 sec)
 where laughing_people *2 > people_in_room
 group by pub;
+
+
+select count(laughing_people)
+from JokeEvent(laughing_people * 2 > people_in_room)#time_batch(5 sec)
+group by pub
+where
+) as funny
+from JokeEvent()#time_batch(5 sec)
+group by pub;
+
+@name('answer') select pub, its.substring(11, 16) as its_start,
+from JokeEvent#time_batch(1 min)
+group by its.substring(11, 16), pub
+having sum (case when laughing_people * 2 > people_in_room then 1 else (case when laughing_people * 2 = people_in_room then 0 else -1 end) end) < 0;
