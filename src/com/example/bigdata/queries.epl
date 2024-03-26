@@ -45,3 +45,19 @@ group by pub;
 from JokeEvent#time_batch(1 min)
 group by its.substring(11, 16), pub
 having sum (case when laughing_people * 2 > people_in_room then 1 else (case when laughing_people * 2 = people_in_room then 0 else -1 end) end) < 0;
+
+ex 5
+create window McL#length(100) as JokeEvent;
+insert into McL select * from JokeEvent where pub = "McLaren's";
+
+@name('answer') select m[0].pub as pub, m[0].its as its_start
+from pattern[every (m = McL() until McL(laughing_people > 5))] ;
+
+ex 6
+ create window McL#length(100) as JokeEvent;
+insert into McL select * from JokeEvent;
+
+@name('answer') select m[0].laughing_people as lp1, m[1].laughing_people as lp2, m[2].laughing_people as lp3
+from pattern[ every ([3] m=JokeEvent(laughing_people >= 4) until JokeEvent(people_in_room >= 30))] ;
+
+ex 7
