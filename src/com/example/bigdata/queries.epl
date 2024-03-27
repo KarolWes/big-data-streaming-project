@@ -1,6 +1,6 @@
 """
-@public @buseventtype create json schema JokeEvent(character string, quote string, people_in_room int, laughing_people int, pub string, ets string, its string);
-@name('result') SELECT character, quote, people_in_room, laughing_people, pub, ets, its from JokeEvent.win:time(10 sec)
+@public @buseventtype create json schema JokeEvent(character string, quote string, people_in_room int, laughing_people int, pubs string, ets string, its string);
+@name('result') SELECT character, quote, people_in_room, laughing_people, pubs, ets, its from JokeEvent.win:time(10 sec)
 group by character;"""
 
 
@@ -20,37 +20,37 @@ from JokeEvent.win:time(2 min)
 having laughing_people = max(laughing_people);
 
 ex4
-@public @buseventtype create json schema JokeEvent(character string, quote string, people_in_room int, laughing_people int, pub string, ets string, its string);
-@name('answer') select funny.pub, count(funny.laughing_people), count(sad.laughing_people)
+@public @buseventtype create json schema JokeEvent(character string, quote string, people_in_room int, laughing_people int, pubs string, ets string, its string);
+@name('answer') select funny.pubs, count(funny.laughing_people), count(sad.laughing_people)
 from JokeEvent(funny.laughing_people / funny.people_in_room > 0.5)#time_batch(5 sec) as funny
 join JokeEvent(sad.laughing_people / sad.people_in_room < 0.5)#time_batch(5 sec) as sad
-on funny.pub = sad.pub
-group by funny.pub
+on funny.pubs = sad.pubs
+group by funny.pubs
 
-select pub as funny
+select pubs as funny
 from JokeEvent()#time_batch(1 sec)
 where laughing_people *2 > people_in_room
-group by pub;
+group by pubs;
 
 
 select count(laughing_people)
 from JokeEvent(laughing_people * 2 > people_in_room)#time_batch(5 sec)
-group by pub
+group by pubs
 where
 ) as funny
 from JokeEvent()#time_batch(5 sec)
-group by pub;
+group by pubs;
 
-@name('answer') select pub, its.substring(11, 16) as its_start,
+@name('answer') select pubs, its.substring(11, 16) as its_start,
 from JokeEvent#time_batch(1 min)
-group by its.substring(11, 16), pub
+group by its.substring(11, 16), pubs
 having sum (case when laughing_people * 2 > people_in_room then 1 else (case when laughing_people * 2 = people_in_room then 0 else -1 end) end) < 0;
 
 ex 5
 create window McL#length(100) as JokeEvent;
-insert into McL select * from JokeEvent where pub = "McLaren's";
+insert into McL select * from JokeEvent where pubs = "McLaren's";
 
-@name('answer') select m[0].pub as pub, m[0].its as its_start
+@name('answer') select m[0].pubs as pub, m[0].its as its_start
 from pattern[every (m = McL() until McL(laughing_people > 5))] ;
 
 ex 6
@@ -61,3 +61,18 @@ insert into McL select * from JokeEvent;
 from pattern[ every ([3] m=JokeEvent(laughing_people >= 4) until JokeEvent(people_in_room >= 30))] ;
 
 ex 7
+@name('answer') SELECT *
+ FROM JokeEvent
+ MATCH_RECOGNIZE (
+    PARTITION BY pubs
+    MEASURES
+    STRT.laughing_people AS ppl_before,
+    STRT.pubs AS pubs,
+    LAST(DOWN.laughing_people) AS ppl_after,
+    COUNT(DOWN.laughing_people)+2 as jokes_count
+    AFTER MATCH SKIP PAST LAST ROW
+    PATTERN (STRT DOWN DOWN DOWN DOWN+ UP)
+    DEFINE
+    DOWN AS DOWN.laughing_people < PREV(DOWN.laughing_people),
+    UP AS UP.laughing_people > PREV(UP.laughing_people)
+ );
