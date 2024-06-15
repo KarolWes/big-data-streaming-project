@@ -30,21 +30,11 @@ public class EsperClient {
         EPDeployment deployment = compileAndDeploy(runtime, """
                 @public @buseventtype create json schema JokeEvent(character string, quote string, people_in_room int, laughing_people int, pubs string, ets string, its string);
                  
-                   @name('answer') SELECT *
-                   FROM JokeEvent
-                   MATCH_RECOGNIZE (
-                      PARTITION BY pubs
-                      MEASURES
-                      STRT.laughing_people AS ppl_before,
-                      STRT.pubs AS pubs,
-                      LAST(DOWN.laughing_people) AS ppl_after,
-                      COUNT(DOWN.laughing_people)+2 as jokes_count
-                      AFTER MATCH SKIP PAST LAST ROW
-                      PATTERN (STRT DOWN DOWN DOWN DOWN+ UP)
-                      DEFINE
-                      DOWN AS DOWN.laughing_people < PREV(DOWN.laughing_people),
-                      UP AS UP.laughing_people > PREV(UP.laughing_people)
-                   );
+                   create window McL#length(100) as JokeEvent;
+                     insert into McL select * from JokeEvent where pubs = "McLaren's";
+                     
+                     @name('answer') select m[0].pubs as pub, m[0].its as its_start
+                     from pattern[every (m = McL() until McL(laughing_people > 5))] ;
                 """);
 
         SimpleListener listener = new SimpleListener();
